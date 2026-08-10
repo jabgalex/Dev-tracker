@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
   try {
-    const projects = await prisma.project.findMany({
-      include: {
-        tasks: {
-          orderBy: { createdAt: "desc" },
-        },
-        logs: {
-          orderBy: { createdAt: "desc" },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
-    });
+    const { data: projects, error } = await supabase
+      .from("Project")
+      .select("*, tasks:Task(*), logs:SessionLog(*)")
+      .order("updatedAt", { ascending: false });
+
+    if (error) throw error;
 
     return NextResponse.json({ projects });
   } catch (error: any) {
@@ -48,8 +43,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Project name is required" }, { status: 400 });
     }
 
-    const project = await prisma.project.create({
-      data: {
+    const { data: project, error } = await supabase
+      .from("Project")
+      .insert({
         name,
         description: description || null,
         status: status || "ACTIVE",
@@ -63,12 +59,11 @@ export async function POST(req: Request) {
         prodUrl: prodUrl || null,
         aiAgents: aiAgents || [],
         techStack: techStack || [],
-      },
-      include: {
-        tasks: true,
-        logs: true,
-      },
-    });
+      })
+      .select("*, tasks:Task(*), logs:SessionLog(*)")
+      .single();
+
+    if (error) throw error;
 
     return NextResponse.json({ project });
   } catch (error: any) {

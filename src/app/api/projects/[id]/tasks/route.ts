@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(
   req: Request,
@@ -14,13 +14,17 @@ export async function POST(
       return NextResponse.json({ error: "Task title is required" }, { status: 400 });
     }
 
-    const task = await prisma.task.create({
-      data: {
+    const { data: task, error } = await supabase
+      .from("Task")
+      .insert({
         projectId: id,
         title,
         priority: priority || "MEDIUM",
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
 
     return NextResponse.json({ task });
   } catch (error: any) {
@@ -40,13 +44,18 @@ export async function PATCH(
       return NextResponse.json({ error: "TaskId is required" }, { status: 400 });
     }
 
-    const task = await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        ...(completed !== undefined && { completed }),
-        ...(title && { title }),
-      },
-    });
+    const updateData: any = {};
+    if (completed !== undefined) updateData.completed = completed;
+    if (title) updateData.title = title;
+
+    const { data: task, error } = await supabase
+      .from("Task")
+      .update(updateData)
+      .eq("id", taskId)
+      .select()
+      .single();
+
+    if (error) throw error;
 
     return NextResponse.json({ task });
   } catch (error: any) {
@@ -66,7 +75,7 @@ export async function DELETE(
       return NextResponse.json({ error: "TaskId is required" }, { status: 400 });
     }
 
-    await prisma.task.delete({ where: { id: taskId } });
+    await supabase.from("Task").delete().eq("id", taskId);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
