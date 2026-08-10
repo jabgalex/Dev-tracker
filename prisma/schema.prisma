@@ -1,3 +1,7 @@
+// ⚠️ REFERENCE ONLY — This schema documents the Supabase database structure.
+// The app no longer uses Prisma at runtime. Data access is via @supabase/supabase-js (REST API).
+// To apply schema changes, run SQL directly in Supabase Dashboard or Management API.
+
 generator client {
   provider = "prisma-client-js"
 }
