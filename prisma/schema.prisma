@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Project {
+  id              String       @id @default(uuid())
+  name            String
+  description     String?
+  status          String       @default("ACTIVE")
+  whereILeftOff   String?
+  lastSessionDate DateTime     @default(now())
+  localPath       String?
+  localPort       Int?
+  githubUrl       String?
+  vercelUrl       String?
+  supabaseUrl     String?
+  vpsIpOrHost     String?
+  prodUrl         String?
+  aiAgents        Json         @default("[]")
+  techStack       Json         @default("[]")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  tasks           Task[]
+  logs            SessionLog[]
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  completed Boolean  @default(false)
+  priority  String   @default("MEDIUM")
+  createdAt DateTime @default(now())
+}
+
+model SessionLog {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  summary     String
+  aiAgentUsed String?
+  createdAt   DateTime @default(now())
+}
